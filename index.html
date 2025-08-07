@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인공감미료와 장내 미생물: 대화형 보고서</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony Neutrals -->
+    <!-- Application Structure Plan: The SPA is designed as a narrative journey. It starts with a high-level introduction to the experiment, then allows users to interactively explore the in-vitro results (microbiome changes) by selecting different sweeteners. Next, it connects these findings to in-vivo outcomes (host health) through another interactive chart. Finally, it explains the underlying mechanism and presents a clear conclusion. This structure guides the user from the "what" to the "so what," making the complex research accessible and logical, rather than just presenting data points. -->
+    <!-- Visualization & Content Choices: 1. Microbiome Changes (In-vitro): Goal is to compare effects. Method is interactive grouped bar charts (Chart.js) and stat cards, controlled by buttons. This allows direct, dynamic comparison of sweeteners, which is more engaging than static tables. 2. Glucose Tolerance (In-vivo): Goal is to show the functional consequence. Method is an interactive line chart (Chart.js) highlighting the selected group's response. This clearly visualizes the key finding of impaired glucose metabolism. 3. Mechanism Explanation: Goal is to inform. Method is a structured HTML/CSS diagram with icons. It simplifies a complex biological process for easy understanding without needing interaction. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #F8F7F4;
+            color: #4A4A4A;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+        }
+        .nav-button.active {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .stat-card {
+            transition: all 0.3s ease;
+            border-left-width: 4px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-6xl">
+
+        <header class="text-center mb-12 md:mb-16">
+            <h1 class="text-3xl md:text-5xl font-bold text-gray-800 mb-4">인공감미료, 정말 괜찮을까요?</h1>
+            <p class="text-lg md:text-xl text-gray-600">반복적인 인공감미료 섭취가 장내 미생물과 우리 몸의 대사에 미치는 영향을 대화형 데이터로 탐색해보세요.</p>
+        </header>
+
+        <section id="experiment" class="mb-16 p-6 bg-white rounded-xl shadow-md">
+            <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">실험 과정 한눈에 보기</h2>
+            <div class="relative">
+                 <div class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gray-200"></div>
+                <div class="relative grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                    <div class="flex flex-col items-center">
+                        <div class="bg-blue-100 text-blue-800 rounded-full w-16 h-16 flex items-center justify-center text-2xl font-bold mb-4 z-10">1</div>
+                        <h3 class="font-semibold text-lg mb-2">체외 배양</h3>
+                        <p class="text-gray-600 text-sm">인간의 장내 미생물을 4주간 각기 다른 감미료(수크랄로스, 사카린, 스테비아)에 노출시켜 '적응'시켰습니다.</p>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="bg-green-100 text-green-800 rounded-full w-16 h-16 flex items-center justify-center text-2xl font-bold mb-4 z-10">2</div>
+                        <h3 class="font-semibold text-lg mb-2">미생물 분석</h3>
+                        <p class="text-gray-600 text-sm">시간이 지남에 따라 미생물 군집의 다양성, 구성, 그리고 주요 대사산물(단쇄지방산) 생산량의 변화를 측정했습니다.</p>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="bg-purple-100 text-purple-800 rounded-full w-16 h-16 flex items-center justify-center text-2xl font-bold mb-4 z-10">3</div>
+                        <h3 class="font-semibold text-lg mb-2">동물 실험</h3>
+                        <p class="text-gray-600 text-sm">'적응된' 미생물을 무균 쥐에게 이식한 후, 혈당 조절 능력에 어떤 변화가 생기는지 관찰했습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="invitro" class="mb-16">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-800">1단계: 장내 미생물은 어떻게 변했을까?</h2>
+                <p class="text-gray-600 mt-2">아래 버튼을 클릭하여 각 감미료가 4주 후 미생물 생태계에 미친 영향을 확인해보세요.</p>
+            </div>
+            <div id="sweetener-controls" class="flex flex-wrap justify-center gap-3 mb-8">
+                <button data-sweetener="control" class="nav-button active font-semibold py-2 px-5 rounded-full bg-white shadow-sm border border-gray-300 text-gray-700" style="--tw-shadow-color: #A0A0A0;">대조군</button>
+                <button data-sweetener="sucralose" class="nav-button font-semibold py-2 px-5 rounded-full bg-white shadow-sm border border-gray-300 text-gray-700" style="--tw-shadow-color: #E88D67;">수크랄로스</button>
+                <button data-sweetener="saccharin" class="nav-button font-semibold py-2 px-5 rounded-full bg-white shadow-sm border border-gray-300 text-gray-700" style="--tw-shadow-color: #D37AA6;">사카린</button>
+                <button data-sweetener="stevia" class="nav-button font-semibold py-2 px-5 rounded-full bg-white shadow-sm border border-gray-300 text-gray-700" style="--tw-shadow-color: #79A884;">스테비아</button>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-center">
+                    <div id="invitro-summary" class="lg:col-span-2">
+                        <h3 id="invitro-title" class="text-xl font-bold mb-3 text-gray-800">대조군 결과</h3>
+                        <p id="invitro-text" class="text-gray-600 mb-4">감미료 없이 배양된 미생물 군집은 4주 동안 안정적인 상태를 유지했습니다. 미생물 다양성이 높게 유지되었고, 유익균과 유해균의 비율, 그리고 유익한 대사산물 생산량 모두 건강한 기준치를 보였습니다.</p>
+                        <div class="space-y-3">
+                            <div id="stat-diversity" class="stat-card p-3 rounded-lg bg-gray-50 border-l-gray-400">
+                                <p class="text-sm font-medium text-gray-500">미생물 다양성 (Shannon 지수)</p>
+                                <p id="diversity-value" class="text-2xl font-bold text-gray-800">4.2</p>
+                            </div>
+                            <div id="stat-scfa" class="stat-card p-3 rounded-lg bg-gray-50 border-l-gray-400">
+                                <p class="text-sm font-medium text-gray-500">주요 단쇄지방산 (mM)</p>
+                                <p id="scfa-value" class="text-2xl font-bold text-gray-800">37.9</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-3">
+                        <div class="chart-container">
+                            <canvas id="bacteriaChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="invivo" class="mb-16">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-800">2단계: 우리 몸에는 어떤 영향을 미칠까?</h2>
+                <p class="text-gray-600 mt-2">'적응된' 미생물을 이식받은 쥐의 혈당 조절 능력 변화를 확인해보세요.</p>
+            </div>
+             <div id="fmt-controls" class="flex flex-wrap justify-center gap-3 mb-8">
+                <button data-fmt="control" class="nav-button active font-semibold py-2 px-5 rounded-full bg-white shadow-sm border border-gray-300 text-gray-700" style="--tw-shadow-color: #A0A0A0;">대조군 미생물 이식</button>
+                <button data-fmt="sucralose" class="nav-button font-semibold py-2 px-5 rounded-full bg-white shadow-sm border border-gray-300 text-gray-700" style="--tw-shadow-color: #E88D67;">수크랄로스 적응 미생물 이식</button>
+                <button data-fmt="saccharin" class="nav-button font-semibold py-2 px-5 rounded-full bg-white shadow-sm border border-gray-300 text-gray-700" style="--tw-shadow-color: #D37AA6;">사카린 적응 미생물 이식</button>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-center">
+                     <div class="lg:col-span-3">
+                        <div class="chart-container">
+                            <canvas id="glucoseChart"></canvas>
+                        </div>
+                    </div>
+                    <div id="invivo-summary" class="lg:col-span-2">
+                        <h3 id="invivo-title" class="text-xl font-bold mb-3 text-gray-800">대조군 미생물 이식 결과</h3>
+                        <p id="invivo-text" class="text-gray-600 mb-4">건강한 미생물 군집을 이식받은 쥐는 포도당 섭취 후 혈당이 완만하게 상승했다가 2시간 내에 정상 수준으로 효과적으로 회복하는, 정상적인 혈당 조절 능력을 보였습니다.</p>
+                        <div class="space-y-3">
+                            <div id="stat-auc" class="stat-card p-3 rounded-lg bg-gray-50 border-l-gray-400">
+                                <p class="text-sm font-medium text-gray-500">총 혈당 반응 (AUC)</p>
+                                <p id="auc-value" class="text-2xl font-bold text-gray-800">12,500</p>
+                            </div>
+                             <div id="stat-peak" class="stat-card p-3 rounded-lg bg-gray-50 border-l-gray-400">
+                                <p class="text-sm font-medium text-gray-500">최고 혈당 (mg/dL)</p>
+                                <p id="peak-value" class="text-2xl font-bold text-gray-800">180</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="mechanism" class="mb-16 p-8 bg-white rounded-xl shadow-md">
+            <h2 class="text-2xl font-bold text-center mb-8 text-gray-800">왜 혈당 조절에 문제가 생길까? "이중 타격" 가설</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="text-center p-6 bg-red-50 rounded-lg">
+                    <div class="text-4xl mb-4">💥</div>
+                    <h3 class="font-bold text-xl text-red-800 mb-2">첫 번째 타격: 염증 유발 물질 증가</h3>
+                    <p class="text-gray-600">합성 감미료는 잠재적 유해균(*Enterobacteriaceae*)을 증식시킵니다. 이 균들은 장벽을 뚫고 혈액으로 들어가 전신 염증과 인슐린 저항성을 유발할 수 있는 내독소(LPS)를 다량 분비합니다.</p>
+                </div>
+                <div class="text-center p-6 bg-blue-50 rounded-lg">
+                     <div class="text-4xl mb-4">🛡️</div>
+                    <h3 class="font-bold text-xl text-blue-800 mb-2">두 번째 타격: 장벽 보호 물질 감소</h3>
+                    <p class="text-gray-600">동시에, 장벽을 튼튼하게 하고 염증을 막아주는 핵심 물질인 '부티레이트'를 생산하는 유익균(*Lachnospiraceae*)은 감소합니다. 이는 장벽을 더욱 취약하게 만듭니다.</p>
+                </div>
+            </div>
+            <div class="text-center mt-8">
+                <p class="text-2xl font-bold text-purple-800">결론: 염증 물질은 늘고 방어막은 약해져, 결국 전신 대사 건강이 악화됩니다.</p>
+            </div>
+        </section>
+
+        <footer class="text-center py-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">최종 결론</h2>
+            <p class="max-w-3xl mx-auto text-gray-600 mb-6">
+                본 연구는 합성 인공감미료가 단순히 칼로리 없는 단맛을 내는 '비활성 물질'이 아님을 보여줍니다. 이들은 장내 미생물 생태계에 직접적인 압력을 가해, 유익균은 줄이고 유해균은 늘리는 방향으로 '진화'시킵니다. 이렇게 기능적으로 변질된 미생물 군집은 결국 우리 몸의 혈당 조절 능력을 손상시키는 직접적인 원인이 될 수 있습니다.
+            </p>
+            <p class="text-sm text-gray-500">이 보고서는 제공된 연구 논문 "반복적인 인공감미료 노출이 장내 미생물의 기능적 적응과 내성 획득을 유도하여 숙주 대사 장애를 초래하는 기전 연구"를 기반으로 제작되었습니다.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const data = {
+            inVitro: {
+                control: {
+                    title: "대조군 결과",
+                    text: "감미료 없이 배양된 미생물 군집은 4주 동안 안정적인 상태를 유지했습니다. 미생물 다양성이 높게 유지되었고, 유익균과 유해균의 비율, 그리고 유익한 대사산물 생산량 모두 건강한 기준치를 보였습니다.",
+                    diversity: 4.2,
+                    scfa: 15.8 + 22.1,
+                    bacteria: { enterobacteriaceae: 1.5, lachnospiraceae: 25.4 }
+                },
+                sucralose: {
+                    title: "수크랄로스 노출 결과",
+                    text: "수크랄로스에 4주간 노출되자, 미생물 다양성이 31%나 감소했습니다. 특히 장 건강에 중요한 부티레이트 생산균은 절반 이하로 줄어든 반면, 잠재적 유해균은 12배 이상 폭발적으로 증가했습니다.",
+                    diversity: 2.9,
+                    scfa: 4.3 + 11.5,
+                    bacteria: { enterobacteriaceae: 18.2, lachnospiraceae: 10.1 }
+                },
+                saccharin: {
+                    title: "사카린 노출 결과",
+                    text: "사카린 역시 미생물 생태계에 심각한 불균형을 초래했습니다. 미생물 다양성이 26% 감소했으며, 잠재적 유해균은 10배 이상 증가하고, 유익한 단쇄지방산 생산 능력은 크게 저하되었습니다.",
+                    diversity: 3.1,
+                    scfa: 5.1 + 13.2,
+                    bacteria: { enterobacteriaceae: 15.7, lachnospiraceae: 12.5 }
+                },
+                stevia: {
+                    title: "스테비아 노출 결과",
+                    text: "천연 감미료인 스테비아에 노출된 군집은 대조군과 거의 차이가 없었습니다. 미생물 다양성, 주요 균주 비율, 대사산물 생산량 모두 안정적으로 유지되어, 합성 감미료와는 다른 양상을 보였습니다.",
+                    diversity: 4.1,
+                    scfa: 15.2 + 21.5,
+                    bacteria: { enterobacteriaceae: 1.8, lachnospiraceae: 24.9 }
+                }
+            },
+            inVivo: {
+                control: {
+                    title: "대조군 미생물 이식 결과",
+                    text: "건강한 미생물 군집을 이식받은 쥐는 포도당 섭취 후 혈당이 완만하게 상승했다가 2시간 내에 정상 수준으로 효과적으로 회복하는, 정상적인 혈당 조절 능력을 보였습니다.",
+                    auc: 12500,
+                    peak: 180,
+                    glucoseData: [85, 160, 180, 140, 110, 90]
+                },
+                sucralose: {
+                    title: "수크랄로스 적응 미생물 이식 결과",
+                    text: "수크랄로스에 적응된 미생물을 이식받은 쥐는 심각한 '내당능 장애'를 보였습니다. 포도당 섭취 후 혈당이 통제 불가능하게 치솟았으며, 총 혈당 반응(AUC)은 대조군 대비 74%나 증가했습니다.",
+                    auc: 21800,
+                    peak: 265,
+                    glucoseData: [102, 220, 265, 240, 200, 180]
+                },
+                saccharin: {
+                    title: "사카린 적응 미생물 이식 결과",
+                    text: "사카린에 적응된 미생물을 이식받은 쥐 역시 혈당 조절 능력이 크게 손상되었습니다. 이는 감미료 자체가 아닌, 감미료에 의해 '변질된 미생물'이 대사 질환의 직접적인 원인임을 시사합니다.",
+                    auc: 20500,
+                    peak: 251,
+                    glucoseData: [99, 210, 251, 230, 190, 170]
+                }
+            }
+        };
+
+        const colors = {
+            control: { bg: '#A0A0A0', border: '#6B7280' },
+            sucralose: { bg: '#FCA5A5', border: '#E88D67' },
+            saccharin: { bg: '#F9A8D4', border: '#D37AA6' },
+            stevia: { bg: '#A7F3D0', border: '#79A884' }
+        };
+
+        const fmtColors = {
+            control: '#A0A0A0',
+            sucralose: '#E88D67',
+            saccharin: '#D37AA6'
+        };
+
+        let bacteriaChart, glucoseChart;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const bacteriaCtx = document.getElementById('bacteriaChart').getContext('2d');
+            bacteriaChart = new Chart(bacteriaCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['잠재적 유해균 (Enterobacteriaceae)', '유익균 (Lachnospiraceae)'],
+                    datasets: [{
+                        label: '상대 풍부도 (%)',
+                        data: [
+                            data.inVitro.control.bacteria.enterobacteriaceae,
+                            data.inVitro.control.bacteria.lachnospiraceae
+                        ],
+                        backgroundColor: [colors.sucralose.bg, colors.stevia.bg],
+                        borderColor: [colors.sucralose.border, colors.stevia.border],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: '주요 박테리아 군집 변화',
+                            font: { size: 16, weight: 'bold' },
+                            color: '#4A4A4A'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: '상대 풍부도 (%)' }
+                        }
+                    }
+                }
+            });
+
+            const glucoseCtx = document.getElementById('glucoseChart').getContext('2d');
+            glucoseChart = new Chart(glucoseCtx, {
+                type: 'line',
+                data: {
+                    labels: ['0', '15', '30', '60', '90', '120'],
+                    datasets: [
+                        {
+                            label: '대조군',
+                            data: data.inVivo.control.glucoseData,
+                            borderColor: fmtColors.control,
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                        },
+                        {
+                            label: '수크랄로스',
+                            data: data.inVivo.sucralose.glucoseData,
+                            borderColor: fmtColors.sucralose,
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                        },
+                        {
+                            label: '사카린',
+                            data: data.inVivo.saccharin.glucoseData,
+                            borderColor: fmtColors.saccharin,
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: {
+                            display: true,
+                            text: '경구 당부하 검사 (OGTT) 결과',
+                            font: { size: 16, weight: 'bold' },
+                            color: '#4A4A4A'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: { display: true, text: '혈당 (mg/dL)' }
+                        },
+                        x: {
+                            title: { display: true, text: '시간 (분)' }
+                        }
+                    }
+                }
+            });
+            
+            updateInVitro('control');
+            updateInVivo('control');
+
+            document.getElementById('sweetener-controls').addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    const sweetener = e.target.dataset.sweetener;
+                    updateInVitro(sweetener);
+                }
+            });
+
+            document.getElementById('fmt-controls').addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    const fmtGroup = e.target.dataset.fmt;
+                    updateInVivo(fmtGroup);
+                }
+            });
+        });
+
+        function updateInVitro(sweetener) {
+            const sweetenerData = data.inVitro[sweetener];
+            
+            document.getElementById('invitro-title').textContent = sweetenerData.title;
+            document.getElementById('invitro-text').textContent = sweetenerData.text;
+            document.getElementById('diversity-value').textContent = sweetenerData.diversity.toFixed(1);
+            document.getElementById('scfa-value').textContent = sweetenerData.scfa.toFixed(1);
+
+            const statDiversity = document.getElementById('stat-diversity');
+            const statScfa = document.getElementById('stat-scfa');
+
+            const borderColor = sweetener === 'control' || sweetener === 'stevia' ? colors.stevia.border : colors.sucralose.border;
+            statDiversity.style.borderColor = borderColor;
+            statScfa.style.borderColor = borderColor;
+
+            bacteriaChart.data.datasets[0].data = [
+                sweetenerData.bacteria.enterobacteriaceae,
+                sweetenerData.bacteria.lachnospiraceae
+            ];
+            bacteriaChart.update();
+
+            document.querySelectorAll('#sweetener-controls button').forEach(btn => {
+                btn.classList.remove('active');
+                const btnColor = colors[btn.dataset.sweetener].border;
+                btn.style.backgroundColor = 'white';
+                btn.style.color = '#4A4A4A';
+                btn.style.borderColor = '#D1D5DB';
+            });
+            const activeButton = document.querySelector(`#sweetener-controls button[data-sweetener="${sweetener}"]`);
+            activeButton.classList.add('active');
+            activeButton.style.backgroundColor = colors[sweetener].border;
+            activeButton.style.color = 'white';
+            activeButton.style.borderColor = colors[sweetener].border;
+        }
+        
+        function updateInVivo(fmtGroup) {
+            const fmtData = data.inVivo[fmtGroup];
+
+            document.getElementById('invivo-title').textContent = fmtData.title;
+            document.getElementById('invivo-text').textContent = fmtData.text;
+            document.getElementById('auc-value').textContent = fmtData.auc.toLocaleString();
+            document.getElementById('peak-value').textContent = fmtData.peak.toLocaleString();
+
+            const statAuc = document.getElementById('stat-auc');
+            const statPeak = document.getElementById('stat-peak');
+            
+            const borderColor = fmtGroup === 'control' ? fmtColors.control : fmtColors[fmtGroup];
+            statAuc.style.borderColor = borderColor;
+            statPeak.style.borderColor = borderColor;
+
+            glucoseChart.data.datasets.forEach((dataset, index) => {
+                const groupName = dataset.label === '대조군' ? 'control' : (dataset.label === '수크랄로스' ? 'sucralose' : 'saccharin');
+                if (groupName === fmtGroup) {
+                    dataset.borderWidth = 4;
+                    dataset.pointRadius = 5;
+                } else {
+                    dataset.borderWidth = 2;
+                    dataset.pointRadius = 3;
+                }
+            });
+            glucoseChart.update();
+
+            document.querySelectorAll('#fmt-controls button').forEach(btn => {
+                btn.classList.remove('active');
+                const btnColor = fmtColors[btn.dataset.fmt];
+                btn.style.backgroundColor = 'white';
+                btn.style.color = '#4A4A4A';
+                btn.style.borderColor = '#D1D5DB';
+            });
+            const activeButton = document.querySelector(`#fmt-controls button[data-fmt="${fmtGroup}"]`);
+            activeButton.classList.add('active');
+            activeButton.style.backgroundColor = fmtColors[fmtGroup];
+            activeButton.style.color = 'white';
+            activeButton.style.borderColor = fmtColors[fmtGroup];
+        }
+
+    </script>
+</body>
+</html>
